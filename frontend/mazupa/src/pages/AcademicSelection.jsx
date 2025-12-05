@@ -18,6 +18,7 @@ import {
   ListItemText
 } from '@mui/material';
 import { School as SchoolIcon } from '@mui/icons-material';
+import axios from 'axios';
 
 export default function AcademicSelector() {
   const [majors, setMajors] = useState([]);
@@ -50,6 +51,26 @@ export default function AcademicSelector() {
             { id: 5, nombre: 'Gestión de Proyectos' }
           ],
         };
+
+        // useEffect(() => {
+        //   const fetchPrograms = async () => {
+        //     try {
+        //       const res = await axios.get(
+        //         `${import.meta.env.VITE_BACKEND_URL}/api/academic-programs`
+        //       );
+
+        //       setMajors(res.data.majors);
+        //       setMinors(res.data.minors);
+
+        //     } catch (error) {
+        //       console.error("Error en API, usando mockData:", error);
+        //       setMajors(mockData.majors);
+        //       setMinors(mockData.minors);
+        //     }
+        //   };
+
+        //   fetchPrograms();
+        // }, []);
 
         await new Promise(resolve => setTimeout(resolve, 500));
 
