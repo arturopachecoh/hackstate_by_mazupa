@@ -1,14 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 :root {
-  /* Colores Primarios UC */
   --uc-celeste: #0176DE;
   --uc-azul: #173F8A;
   --uc-azul-oscuro: #03122E;
   --uc-amarillo: #FEC60D;
   --uc-amarillo-oscuro: #E3AE00;
-  
-  /* Colores Secundarios UC */
+
   --uc-negro: #000000;
   --uc-gris-oscuro-a: #707070;
   --uc-gris-oscuro-b: #9C9C9C;
@@ -17,23 +15,13 @@
   --uc-gris-claro-b: #F0F0F0;
   --uc-gris-claro-c: #F6F6F6;
   --uc-blanco: #FFFFFF;
-  
-  /* Colores de Feedback UC */
+
   --uc-verde-exito: #00AA00;
   --uc-amarillo-advertencia: #E3AE00;
   --uc-rojo-error: #F24F4F;
   --uc-celeste-info: #0176DE;
-  
-  /* Tipografía */
-  font-family: 'Roboto', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  
-  /* Configuración de renderizado */
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+
+  font-family: 'Roboto', system-ui, sans-serif;
 }
 
 * {
@@ -43,69 +31,11 @@
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
   min-height: 100vh;
   background-color: var(--uc-gris-claro-c);
-  color: var(--uc-azul-oscuro);
 }
 
 #root {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
 }
-
-a {
-  font-weight: 500;
-  color: var(--uc-celeste);
-  text-decoration: inherit;
-  transition: color 0.3s ease;
-}
-
-a:hover {
-  color: var(--uc-azul);
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-  color: var(--uc-azul-oscuro);
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--uc-celeste);
-  color: var(--uc-blanco);
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-button:hover {
-  background-color: var(--uc-azul);
-  border-color: var(--uc-azul);
-}
-
-button:focus,
-button:focus-visible {
-  outline: 4px auto var(--uc-celeste);
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Utility classes para colores UC */
-.bg-celeste { background-color: var(--uc-celeste); }
-.bg-azul { background-color: var(--uc-azul); }
-.bg-azul-oscuro { background-color: var(--uc-azul-oscuro); }
-.text-celeste { color: var(--uc-celeste); }
-.text-azul { color: var(--uc-azul); }
-.text-azul-oscuro { color: var(--uc-azul-oscuro); }

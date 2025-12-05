@@ -17,16 +17,16 @@ export default function MallasINGLanding() {
   };
 
   return (
-    <Container
-      maxWidth="sm"
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #0176DE 0%, #173F8A 100%)",
-      }}
-    >
+    <Box
+    sx={{
+      width: "100%",
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "linear-gradient(135deg, #0176DE 0%, #173F8A 100%)",
+    }}
+  >
       <Paper
         elevation={4}
         sx={{
@@ -82,7 +82,7 @@ export default function MallasINGLanding() {
           Empezar
         </Button>
       </Paper>
-    </Container>
+    </Box>
   );
 }
 
