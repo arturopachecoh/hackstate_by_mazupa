@@ -35,22 +35,9 @@ export default function AcademicSelector() {
         setLoading(true);
 
         // datos mock
-        const mockData = {
-          majors: [
-            { id: 1, nombre: 'Ingeniería Civil' },
-            { id: 2, nombre: 'Psicología' },
-            { id: 3, nombre: 'Administración de Empresas' },
-            { id: 4, nombre: 'Medicina' },
-            { id: 5, nombre: 'Derecho' }
-          ],
-          minors: [
-            { id: 1, nombre: 'Inteligencia Artificial' },
-            { id: 2, nombre: 'Emprendimiento' },
-            { id: 3, nombre: 'Desarrollo Sostenible' },
-            { id: 4, nombre: 'Marketing Digital' },
-            { id: 5, nombre: 'Gestión de Proyectos' }
-          ],
-        };
+        const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/majors-minors`
+        );
 
         // useEffect(() => {
         //   const fetchPrograms = async () => {
@@ -74,8 +61,8 @@ export default function AcademicSelector() {
 
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        setMajors(mockData.majors);
-        setMinors(mockData.minors);
+        setMajors(res.data.majors);
+        setMinors(res.data.minors);
         setLoading(false);
       } catch (err) {
         setError('Error al cargar los datos');
@@ -92,8 +79,8 @@ export default function AcademicSelector() {
       return;
     }
     
-    const majorSeleccionado = majors.find(m => m.id === selectedMajor);
-    const minorSeleccionado = minors.find(m => m.id === selectedMinor);
+    const majorSeleccionado = majors.find(m => m.nombre === selectedMajor);
+    const minorSeleccionado = minors.find(m => m.nombre === selectedMinor);
 
     alert(`Selección guardada:\nMajor: ${majorSeleccionado?.nombre}\nMinor: ${minorSeleccionado?.nombre}`);
   };
@@ -179,8 +166,8 @@ export default function AcademicSelector() {
             >
               {majors.map((major) => (
                 <MenuItem 
-                  key={major.id} 
-                  value={major.id}
+                  key={major.nombre} 
+                  value={major.nombre}
                   sx={{
                     '&:hover': {
                       bgcolor: '#F0F0F0',
@@ -226,8 +213,8 @@ export default function AcademicSelector() {
             >
               {minors.map((minor) => (
                 <MenuItem 
-                  key={minor.id} 
-                  value={minor.id}
+                  key={minor.nombre} 
+                  value={minor.nombre}
                   sx={{
                     '&:hover': {
                       bgcolor: '#F0F0F0',
