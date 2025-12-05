@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -11,20 +12,17 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  ListItemText
 } from '@mui/material';
 import { School as SchoolIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 export default function AcademicSelector() {
+  const navigate = useNavigate();
   const [majors, setMajors] = useState([]);
   const [minors, setMinors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   
   const [selectedMajor, setSelectedMajor] = useState('');
   const [selectedMinor, setSelectedMinor] = useState('');
@@ -33,33 +31,9 @@ export default function AcademicSelector() {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // datos mock
         const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/majors-minors`
+          `${import.meta.env.VITE_BACKEND_URL}/majors-minors`
         );
-
-        // useEffect(() => {
-        //   const fetchPrograms = async () => {
-        //     try {
-        //       const res = await axios.get(
-        //         `${import.meta.env.VITE_BACKEND_URL}/api/academic-programs`
-        //       );
-
-        //       setMajors(res.data.majors);
-        //       setMinors(res.data.minors);
-
-        //     } catch (error) {
-        //       console.error("Error en API, usando mockData:", error);
-        //       setMajors(mockData.majors);
-        //       setMinors(mockData.minors);
-        //     }
-        //   };
-
-        //   fetchPrograms();
-        // }, []);
-
-        await new Promise(resolve => setTimeout(resolve, 500));
 
         setMajors(res.data.majors);
         setMinors(res.data.minors);
@@ -73,16 +47,41 @@ export default function AcademicSelector() {
     fetchData();
   }, []);
 
-  const handleSubmit = () => {
-    if (!selectedMajor || !selectedMinor) {
-      alert('Por favor completa todos los campos requeridos');
+  const handleSubmit = async () => {
+    if (!selectedMajor) {
+      alert('Por favor selecciona al menos un Major');
       return;
     }
     
-    const majorSeleccionado = majors.find(m => m.nombre === selectedMajor);
-    const minorSeleccionado = minors.find(m => m.nombre === selectedMinor);
+    try {
+      setSubmitting(true);
+      
+      // Llamada a la API para obtener la malla curricular
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/malla`,
+        {
+          major: selectedMajor,
+          minor: selectedMinor || null  // Enviar null si no hay minor seleccionado
+        }
+      );
 
-    alert(`Selección guardada:\nMajor: ${majorSeleccionado?.nombre}\nMinor: ${minorSeleccionado?.nombre}`);
+      console.log('Malla recibida:', response.data);
+
+      // Navegar a la página de la malla con los datos
+      navigate('/malla', { 
+        state: { 
+          mallaData: response.data,
+          major: selectedMajor,
+          minor: selectedMinor
+        } 
+      });
+      
+    } catch (err) {
+      console.error('Error al obtener la malla curricular:', err);
+      const errorMessage = err.response?.data?.error || 'Error al cargar la malla curricular. Por favor intenta nuevamente.';
+      alert(errorMessage);
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -142,6 +141,7 @@ export default function AcademicSelector() {
           <FormControl 
             fullWidth 
             required
+            disabled={submitting}
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
@@ -188,7 +188,7 @@ export default function AcademicSelector() {
 
           <FormControl 
             fullWidth 
-            required
+            disabled={submitting}
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
@@ -203,12 +203,12 @@ export default function AcademicSelector() {
               },
             }}
           >
-            <InputLabel id="minor-label">Minor</InputLabel>
+            <InputLabel id="minor-label">Minor (Opcional)</InputLabel>
             <Select
               labelId="minor-label"
               id="minor"
               value={selectedMinor}
-              label="Minor"
+              label="Minor (Opcional)"
               onChange={(e) => setSelectedMinor(e.target.value)}
             >
               {minors.map((minor) => (
@@ -237,6 +237,7 @@ export default function AcademicSelector() {
             variant="contained"
             size="large"
             onClick={handleSubmit}
+            disabled={submitting}
             sx={{
               mt: 2,
               py: 1.5,
@@ -250,10 +251,20 @@ export default function AcademicSelector() {
               "&:active": {
                 transform: "translateY(0)",
               },
+              "&:disabled": {
+                bgcolor: "#CCCCCC",
+              },
               transition: "all 0.3s ease",
             }}
           >
-            Confirmar Selección
+            {submitting ? (
+              <>
+                <CircularProgress size={24} sx={{ color: "white", mr: 1 }} />
+                Cargando malla...
+              </>
+            ) : (
+              'Confirmar Selección'
+            )}
           </Button>
         </Box>
 

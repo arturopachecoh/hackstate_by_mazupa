@@ -1,3 +1,4 @@
+import { useLocation, Navigate } from 'react-router-dom';
 import { useState, useMemo } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
@@ -9,7 +10,7 @@ const getBlockColor = (bloque) => {
   return "#f97316";
 };
 
-export default function MallaCurricular({ data }) {
+function MallaContent({ data }) {
   const [ramos, setRamos] = useState(data.Ramos);
   const [selectedSigla, setSelectedSigla] = useState(null);
 
@@ -28,21 +29,24 @@ export default function MallaCurricular({ data }) {
 
   const semestres = Object.keys(semestreGroups).map(Number).sort((a, b) => a - b);
 
-  // Obtener prerequisitos y corequisitos relacionados
-  const { prereqs, coreqs } = useMemo(() => {
+  // Obtener prerequisitos, corequisitos y cursos que desbloquea
+  const { prereqs, coreqs, unlocks } = useMemo(() => {
     const prereqs = new Set();
     const coreqs = new Set();
-    if (!selectedSigla) return { prereqs, coreqs };
+    const unlocks = new Set();
+    if (!selectedSigla) return { prereqs, coreqs, unlocks };
 
+    // Cursos que desbloquea el seleccionado
     ramos.forEach((ramo) => {
       ramo.Requisitos?.Cursos?.forEach((curso) => {
         if (curso.Sigla === selectedSigla) {
-          if (curso.TipoRequisito === "Requisito" && ramo.CodSigla) prereqs.add(ramo.CodSigla);
-          if (curso.TipoRequisito === "Corequisito" && ramo.CodSigla) coreqs.add(ramo.CodSigla);
+          if (curso.TipoRequisito === "Requisito" && ramo.CodSigla) unlocks.add(ramo.CodSigla);
+          if (curso.TipoRequisito === "Corequisito" && ramo.CodSigla) unlocks.add(ramo.CodSigla);
         }
       });
     });
 
+    // Prerequisitos y corequisitos del seleccionado
     const selected = ramos.find((r) => r.CodSigla === selectedSigla || r.CodLista === selectedSigla);
     selected?.Requisitos?.Cursos?.forEach((curso) => {
       if (curso.Sigla) {
@@ -51,17 +55,20 @@ export default function MallaCurricular({ data }) {
       }
     });
 
-    return { prereqs, coreqs };
+    return { prereqs, coreqs, unlocks };
   }, [selectedSigla, ramos]);
 
   // Estilo del card
   const getCardStyle = (ramo, isDragging) => {
+    const blockColor = getBlockColor(ramo.BloqueAcademico);
     const base = {
       padding: 12,
+      paddingLeft: 16,
       borderRadius: 8,
       cursor: "pointer",
-      color: "white",
-      backgroundColor: getBlockColor(ramo.BloqueAcademico),
+      color: "#1f2937",
+      backgroundColor: "white",
+      borderLeft: `4px solid ${blockColor}`,
       boxShadow: isDragging ? "0 8px 16px rgba(0,0,0,0.2)" : "0 2px 4px rgba(0,0,0,0.1)",
       transform: isDragging ? "rotate(2deg)" : "none",
       transition: "all 0.2s",
@@ -72,17 +79,22 @@ export default function MallaCurricular({ data }) {
     if (ramoId === selectedSigla) return { ...base, boxShadow: "0 0 0 4px #3b82f6", transform: "scale(1.05)" };
     if (prereqs.has(ramoId)) return { ...base, boxShadow: "0 0 0 3px #22c55e" };
     if (coreqs.has(ramoId)) return { ...base, boxShadow: "0 0 0 3px #eab308" };
+    if (unlocks.has(ramoId)) return { ...base, boxShadow: "0 0 0 3px #ec4899" };
     return { ...base, opacity: 0.3 };
   };
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     const newRamos = [...ramos];
-    const ramo = newRamos.find(
-      (r) => (r.CodSigla || r.CodLista || `${r.Nombre}-${r.SemestreBloque}`) === result.draggableId
-    );
-    if (ramo) {
-      ramo.SemestreBloque = parseInt(result.destination.droppableId);
+    
+    // Buscar el ramo por su ID único
+    const ramoIndex = newRamos.findIndex((r, idx) => {
+      const uniqueId = r.CodSigla || r.CodLista || `ramo-${r.SemestreBloque}-${idx}-${r.Nombre.replace(/\s+/g, '-')}`;
+      return uniqueId === result.draggableId;
+    });
+    
+    if (ramoIndex !== -1) {
+      newRamos[ramoIndex].SemestreBloque = parseInt(result.destination.droppableId);
       setRamos(newRamos);
     }
   };
@@ -93,9 +105,10 @@ export default function MallaCurricular({ data }) {
       
       {/* Leyenda */}
       <div style={{ display: "flex", gap: 16, marginBottom: 24, fontSize: 14 }}>
-        <span>🟢 Prerequisito</span>
-        <span>🟡 Corequisito</span>
         <span>🔵 Seleccionado</span>
+        <span>🟢 Prerequisito (debes aprobar antes)</span>
+        <span>🟡 Corequisito (tomar junto)</span>
+        <span>🔴 Desbloquea (puedes tomar después)</span>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -122,10 +135,12 @@ export default function MallaCurricular({ data }) {
                       borderRadius: "0 0 8px 8px",
                     }}
                   >
-                    {semestreGroups[sem]?.map((ramo, index) => (
+                    {semestreGroups[sem]?.map((ramo, index) => {
+                      const uniqueId = ramo.CodSigla || ramo.CodLista || `ramo-${sem}-${index}-${ramo.Nombre.replace(/\s+/g, '-')}`;
+                      return (
                       <Draggable
-                        key={ramo.CodSigla || ramo.CodLista || `${ramo.Nombre}-${sem}-${index}`}
-                        draggableId={ramo.CodSigla || ramo.CodLista || `${ramo.Nombre}-${sem}-${index}`}
+                        key={uniqueId}
+                        draggableId={uniqueId}
                         index={index}
                       >
                         {(provided, snapshot) => (
@@ -147,7 +162,8 @@ export default function MallaCurricular({ data }) {
                           </div>
                         )}
                       </Draggable>
-                    ))}
+                    );
+                    })}
                     {provided.placeholder}
                   </div>
                 )}
@@ -162,4 +178,15 @@ export default function MallaCurricular({ data }) {
       </p>
     </div>
   );
+}
+
+export default function MallaCurricular() {
+  const location = useLocation();
+  
+  // Si no hay datos en el state, redirigir a la selección
+  if (!location.state || !location.state.mallaData) {
+    return <Navigate to="/selection" replace />;
+  }
+
+  return <MallaContent data={location.state.mallaData} />;
 }
