@@ -36,9 +36,4 @@ app.use(chatRoutes.allowedMethods());
 app.use(majorsMinorsRoutes.routes());
 app.use(majorsMinorsRoutes.allowedMethods());
 
-const PORT = 3000;
-app.listen(PORT, () => {
-      console.log(`Servidor Koa corriendo en puerto ${PORT}`);
-});
-
 module.exports = app;
