@@ -21,6 +21,7 @@ const { koaBody } = require('koa-body'); // ← Cambio aquí
 const cors = require('@koa/cors');
 const chatRoutes = require('./routes/chat.routes');
 const info = require('./routes/personal_info');
+const majorsMinorsRoutes = require('./routes/majorsMinors');
 
 const app = new Koa();
 
@@ -32,10 +33,7 @@ app.use(info.routes());
 // Rutas
 app.use(chatRoutes.routes());
 app.use(chatRoutes.allowedMethods());
-
-const PORT = 3001;
-app.listen(PORT, () => {
-      console.log(`Servidor Koa corriendo en puerto ${PORT}`);
-});
+app.use(majorsMinorsRoutes.routes());
+app.use(majorsMinorsRoutes.allowedMethods());
 
 module.exports = app;

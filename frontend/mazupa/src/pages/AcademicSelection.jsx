@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -11,19 +12,17 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  ListItemText
 } from '@mui/material';
 import { School as SchoolIcon } from '@mui/icons-material';
+import axios from 'axios';
 
 export default function AcademicSelector() {
+  const navigate = useNavigate();
   const [majors, setMajors] = useState([]);
   const [minors, setMinors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   
   const [selectedMajor, setSelectedMajor] = useState('');
   const [selectedMinor, setSelectedMinor] = useState('');
@@ -32,29 +31,12 @@ export default function AcademicSelector() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/majors-minors`
+        );
 
-        // datos mock
-        const mockData = {
-          majors: [
-            { id: 1, nombre: 'Ingeniería Civil' },
-            { id: 2, nombre: 'Psicología' },
-            { id: 3, nombre: 'Administración de Empresas' },
-            { id: 4, nombre: 'Medicina' },
-            { id: 5, nombre: 'Derecho' }
-          ],
-          minors: [
-            { id: 1, nombre: 'Inteligencia Artificial' },
-            { id: 2, nombre: 'Emprendimiento' },
-            { id: 3, nombre: 'Desarrollo Sostenible' },
-            { id: 4, nombre: 'Marketing Digital' },
-            { id: 5, nombre: 'Gestión de Proyectos' }
-          ],
-        };
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        setMajors(mockData.majors);
-        setMinors(mockData.minors);
+        setMajors(res.data.majors);
+        setMinors(res.data.minors);
         setLoading(false);
       } catch (err) {
         setError('Error al cargar los datos');
@@ -65,16 +47,41 @@ export default function AcademicSelector() {
     fetchData();
   }, []);
 
-  const handleSubmit = () => {
-    if (!selectedMajor || !selectedMinor) {
-      alert('Por favor completa todos los campos requeridos');
+  const handleSubmit = async () => {
+    if (!selectedMajor) {
+      alert('Por favor selecciona al menos un Major');
       return;
     }
     
-    const majorSeleccionado = majors.find(m => m.id === selectedMajor);
-    const minorSeleccionado = minors.find(m => m.id === selectedMinor);
+    try {
+      setSubmitting(true);
+      
+      // Llamada a la API para obtener la malla curricular
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/malla`,
+        {
+          major: selectedMajor,
+          minor: selectedMinor || null  // Enviar null si no hay minor seleccionado
+        }
+      );
 
-    alert(`Selección guardada:\nMajor: ${majorSeleccionado?.nombre}\nMinor: ${minorSeleccionado?.nombre}`);
+      console.log('Malla recibida:', response.data);
+
+      // Navegar a la página de la malla con los datos
+      navigate('/malla', { 
+        state: { 
+          mallaData: response.data,
+          major: selectedMajor,
+          minor: selectedMinor
+        } 
+      });
+      
+    } catch (err) {
+      console.error('Error al obtener la malla curricular:', err);
+      const errorMessage = err.response?.data?.error || 'Error al cargar la malla curricular. Por favor intenta nuevamente.';
+      alert(errorMessage);
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -134,6 +141,7 @@ export default function AcademicSelector() {
           <FormControl 
             fullWidth 
             required
+            disabled={submitting}
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
@@ -158,8 +166,8 @@ export default function AcademicSelector() {
             >
               {majors.map((major) => (
                 <MenuItem 
-                  key={major.id} 
-                  value={major.id}
+                  key={major.nombre} 
+                  value={major.nombre}
                   sx={{
                     '&:hover': {
                       bgcolor: '#F0F0F0',
@@ -180,7 +188,7 @@ export default function AcademicSelector() {
 
           <FormControl 
             fullWidth 
-            required
+            disabled={submitting}
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
@@ -195,18 +203,18 @@ export default function AcademicSelector() {
               },
             }}
           >
-            <InputLabel id="minor-label">Minor</InputLabel>
+            <InputLabel id="minor-label">Minor (Opcional)</InputLabel>
             <Select
               labelId="minor-label"
               id="minor"
               value={selectedMinor}
-              label="Minor"
+              label="Minor (Opcional)"
               onChange={(e) => setSelectedMinor(e.target.value)}
             >
               {minors.map((minor) => (
                 <MenuItem 
-                  key={minor.id} 
-                  value={minor.id}
+                  key={minor.nombre} 
+                  value={minor.nombre}
                   sx={{
                     '&:hover': {
                       bgcolor: '#F0F0F0',
@@ -229,6 +237,7 @@ export default function AcademicSelector() {
             variant="contained"
             size="large"
             onClick={handleSubmit}
+            disabled={submitting}
             sx={{
               mt: 2,
               py: 1.5,
@@ -242,50 +251,23 @@ export default function AcademicSelector() {
               "&:active": {
                 transform: "translateY(0)",
               },
+              "&:disabled": {
+                bgcolor: "#CCCCCC",
+              },
               transition: "all 0.3s ease",
             }}
           >
-            Confirmar Selección
+            {submitting ? (
+              <>
+                <CircularProgress size={24} sx={{ color: "white", mr: 1 }} />
+                Cargando malla...
+              </>
+            ) : (
+              'Confirmar Selección'
+            )}
           </Button>
         </Box>
 
-        {(selectedMajor || selectedMinor) && (
-          <Card sx={{ mt: 4, bgcolor: "#F6F6F6", border: "1px solid #EAEAEA" }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ color: "#03122E", fontWeight: 600 }} gutterBottom>
-                Selección actual:
-              </Typography>
-              <List dense>
-                {selectedMajor && (
-                  <ListItem>
-                    <ListItemText
-                      primary={`Major: ${majors.find(m => m.id === selectedMajor)?.nombre}`}
-                      sx={{
-                        '& .MuiListItemText-primary': {
-                          color: '#707070',
-                          fontWeight: 500,
-                        }
-                      }}
-                    />
-                  </ListItem>
-                )}
-                {selectedMinor && (
-                  <ListItem>
-                    <ListItemText
-                      primary={`Minor: ${minors.find(m => m.id === selectedMinor)?.nombre}`}
-                      sx={{
-                        '& .MuiListItemText-primary': {
-                          color: '#707070',
-                          fontWeight: 500,
-                        }
-                      }}
-                    />
-                  </ListItem>
-                )}
-              </List>
-            </CardContent>
-          </Card>
-        )}
       </Paper>
     </Container>
   );
